@@ -6,24 +6,41 @@ export async function GET(request: NextRequest) {
   const lon = searchParams.get("lon")
   const radius = searchParams.get("radius") || "10000" // 10km default
 
-  // If no coordinates provided, return mock data for development
+  // If no coordinates provided, return realistic mock data for development
   if (!lat || !lon) {
     const mockHospitals = [
       {
         id: 1,
         name: "City General Hospital",
-        address: "123 Main Street, Downtown",
-        phone: "(555) 123-4567",
+        address: "123 Healthcare Ave, Medical District",
+        phone: "+1-555-0123",
         latitude: 40.7128,
         longitude: -74.006,
+        currentPatients: 5,
+        avgWaitTime: 22,
+        emergencyCases: 1
       },
       {
         id: 2,
         name: "Metro Emergency Center",
-        address: "456 Oak Avenue, Midtown",
-        phone: "(555) 987-6543",
+        address: "456 Urgent Care Blvd, Downtown",
+        phone: "+1-555-0456",
         latitude: 40.7589,
         longitude: -73.9851,
+        currentPatients: 2,
+        avgWaitTime: 14,
+        emergencyCases: 1
+      },
+      {
+        id: 3,
+        name: "Riverside Medical Center",
+        address: "789 River Road, Riverside",
+        phone: "+1-555-0789",
+        latitude: 40.7282,
+        longitude: -74.0776,
+        currentPatients: 0,
+        avgWaitTime: 0,
+        emergencyCases: 0
       },
     ]
     return NextResponse.json(mockHospitals)

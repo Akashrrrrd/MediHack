@@ -1,223 +1,246 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts"
-import { TrendingUp, Clock, Users, Activity } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { TrendingUp, TrendingDown, Users, Clock, Heart, Activity } from "lucide-react"
 
 interface AnalyticsDashboardProps {
   hospitalId: number
 }
 
 export function AnalyticsDashboard({ hospitalId }: AnalyticsDashboardProps) {
-  const [timeRange, setTimeRange] = useState("today")
+  const [analytics, setAnalytics] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Mock analytics data
-  const waitTimeData = [
-    { hour: "8:00", emergency: 15, routine: 45, urgent: 25 },
-    { hour: "9:00", emergency: 12, routine: 52, urgent: 30 },
-    { hour: "10:00", emergency: 18, routine: 48, urgent: 28 },
-    { hour: "11:00", emergency: 22, routine: 55, urgent: 35 },
-    { hour: "12:00", emergency: 20, routine: 60, urgent: 40 },
-    { hour: "13:00", emergency: 16, routine: 58, urgent: 32 },
-    { hour: "14:00", emergency: 25, routine: 65, urgent: 45 },
-    { hour: "15:00", emergency: 19, routine: 50, urgent: 38 },
-    { hour: "16:00", emergency: 14, routine: 42, urgent: 28 },
-    { hour: "17:00", emergency: 17, routine: 38, urgent: 25 },
-  ]
+  useEffect(() => {
+    // Mock analytics data - in real app, fetch from API
+    const mockAnalytics = {
+      todayStats: {
+        totalPatients: 47,
+        avgWaitTime: 22,
+        patientSatisfaction: 4.2,
+        emergencyCases: 3,
+        completedConsultations: 42,
+        peakHour: "2:00 PM"
+      },
+      trends: {
+        patientsChange: 12,
+        waitTimeChange: -8,
+        satisfactionChange: 0.3,
+        emergencyChange: -1
+      },
+      departmentPerformance: [
+        { name: "Emergency Department", patients: 8, avgWait: 15, satisfaction: 4.1 },
+        { name: "General Medicine", patients: 18, avgWait: 28, satisfaction: 4.3 },
+        { name: "Cardiology", patients: 12, avgWait: 25, satisfaction: 4.4 },
+        { name: "Pediatrics", patients: 9, avgWait: 18, satisfaction: 4.5 }
+      ],
+      hourlyData: [
+        { hour: "8 AM", patients: 3 },
+        { hour: "9 AM", patients: 5 },
+        { hour: "10 AM", patients: 8 },
+        { hour: "11 AM", patients: 12 },
+        { hour: "12 PM", patients: 15 },
+        { hour: "1 PM", patients: 18 },
+        { hour: "2 PM", patients: 22 },
+        { hour: "3 PM", patients: 19 },
+        { hour: "4 PM", patients: 16 },
+        { hour: "5 PM", patients: 12 }
+      ]
+    }
+    
+    setAnalytics(mockAnalytics)
+    setLoading(false)
+  }, [hospitalId])
 
-  const departmentData = [
-    { name: "Emergency", patients: 45, avgWait: 18, color: "#ef4444" },
-    { name: "General Medicine", patients: 78, avgWait: 42, color: "#10b981" },
-    { name: "Cardiology", patients: 23, avgWait: 35, color: "#6366f1" },
-    { name: "Pediatrics", patients: 34, avgWait: 28, color: "#f97316" },
-  ]
+  const formatTrend = (value: number, type: "number" | "time" | "rating" = "number") => {
+    const isPositive = value > 0
+    const icon = isPositive ? TrendingUp : TrendingDown
+    const color = type === "time" ? (isPositive ? "text-red-600" : "text-green-600") : 
+                  (isPositive ? "text-green-600" : "text-red-600")
+    
+    let displayValue = Math.abs(value).toString()
+    if (type === "time") displayValue += "m"
+    if (type === "rating") displayValue = displayValue.slice(0, 3)
+    
+    return (
+      <div className={`flex items-center gap-1 ${color}`}>
+        {React.createElement(icon, { className: "w-3 h-3" })}
+        <span className="text-xs">{isPositive ? "+" : "-"}{displayValue}</span>
+      </div>
+    )
+  }
 
-  const satisfactionData = [
-    { name: "Excellent", value: 45, color: "#10b981" },
-    { name: "Good", value: 32, color: "#84cc16" },
-    { name: "Average", value: 18, color: "#f97316" },
-    { name: "Poor", value: 5, color: "#ef4444" },
-  ]
-
-  const performanceMetrics = [
-    { label: "Average Wait Time", value: "38 min", change: "-12%", trend: "down", icon: Clock },
-    { label: "Patient Throughput", value: "180/day", change: "+8%", trend: "up", icon: Users },
-    { label: "Emergency Response", value: "4.2 min", change: "-15%", trend: "down", icon: Activity },
-    { label: "Satisfaction Score", value: "4.2/5", change: "+5%", trend: "up", icon: TrendingUp },
-  ]
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading analytics...</p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Controls */}
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Patients</p>
+                <p className="text-2xl font-bold">{analytics.todayStats.totalPatients}</p>
+              </div>
+              <div className="flex flex-col items-end">
+                <Users className="w-4 h-4 text-muted-foreground mb-1" />
+                {formatTrend(analytics.trends.patientsChange)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Avg Wait Time</p>
+                <p className="text-2xl font-bold">{analytics.todayStats.avgWaitTime}m</p>
+              </div>
+              <div className="flex flex-col items-end">
+                <Clock className="w-4 h-4 text-muted-foreground mb-1" />
+                {formatTrend(analytics.trends.waitTimeChange, "time")}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Patient Satisfaction</p>
+                <p className="text-2xl font-bold">{analytics.todayStats.patientSatisfaction}/5</p>
+              </div>
+              <div className="flex flex-col items-end">
+                <Heart className="w-4 h-4 text-muted-foreground mb-1" />
+                {formatTrend(analytics.trends.satisfactionChange, "rating")}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Emergency Cases</p>
+                <p className="text-2xl font-bold">{analytics.todayStats.emergencyCases}</p>
+              </div>
+              <div className="flex flex-col items-end">
+                <Activity className="w-4 h-4 text-muted-foreground mb-1" />
+                {formatTrend(analytics.trends.emergencyChange)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Department Performance */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="font-serif">Analytics Dashboard</CardTitle>
-              <CardDescription>Comprehensive insights into hospital performance and patient flow</CardDescription>
-            </div>
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-                <SelectItem value="quarter">This Quarter</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <CardTitle className="font-serif">Department Performance</CardTitle>
+          <CardDescription>Today's performance metrics by department</CardDescription>
         </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {analytics.departmentPerformance.map((dept: any, index: number) => (
+              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium">{dept.name}</h4>
+                  <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
+                    <span>{dept.patients} patients</span>
+                    <span>{dept.avgWait}m avg wait</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-primary" />
+                    <span className="font-medium">{dept.satisfaction}/5</span>
+                  </div>
+                  <Badge variant={dept.satisfaction >= 4.0 ? "outline" : "secondary"} className="mt-1">
+                    {dept.satisfaction >= 4.5 ? "Excellent" : 
+                     dept.satisfaction >= 4.0 ? "Good" : 
+                     dept.satisfaction >= 3.5 ? "Fair" : "Needs Improvement"}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
       </Card>
 
-      {/* Performance Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {performanceMetrics.map((metric, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{metric.label}</CardTitle>
-              <metric.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metric.value}</div>
-              <div
-                className={`text-xs flex items-center gap-1 ${
-                  metric.trend === "up" ? "text-primary" : "text-destructive"
-                }`}
-              >
-                <TrendingUp className={`h-3 w-3 ${metric.trend === "down" ? "rotate-180" : ""}`} />
-                {metric.change} from last period
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Wait Times by Hour */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-medium">Wait Times by Hour</CardTitle>
-            <CardDescription>Average wait times throughout the day</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={waitTimeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="emergency" stroke="#ef4444" strokeWidth={2} name="Emergency" />
-                <Line type="monotone" dataKey="urgent" stroke="#f97316" strokeWidth={2} name="Urgent" />
-                <Line type="monotone" dataKey="routine" stroke="#10b981" strokeWidth={2} name="Routine" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Department Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-medium">Department Performance</CardTitle>
-            <CardDescription>Patient volume and average wait times</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={departmentData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="patients" fill="#10b981" name="Patients" />
-                <Bar dataKey="avgWait" fill="#6366f1" name="Avg Wait (min)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Patient Satisfaction */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-medium">Patient Satisfaction</CardTitle>
-            <CardDescription>Satisfaction ratings distribution</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={satisfactionData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}%`}
-                >
-                  {satisfactionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Key Insights */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-medium">AI Insights</CardTitle>
-            <CardDescription>Automated recommendations and trends</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <div className="text-sm font-medium text-foreground">Peak Hours Identified</div>
-                <div className="text-xs text-muted-foreground">
-                  Highest patient volume between 11 AM - 2 PM. Consider additional staffing.
+      {/* Hourly Patient Flow */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif">Patient Flow Today</CardTitle>
+          <CardDescription>Hourly patient arrivals and peak times</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground">
+              Peak hour: <span className="font-medium text-foreground">{analytics.todayStats.peakHour}</span>
+            </div>
+            <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+              {analytics.hourlyData.map((data: any, index: number) => (
+                <div key={index} className="text-center">
+                  <div className="text-xs text-muted-foreground mb-1">{data.hour}</div>
+                  <div 
+                    className="bg-primary/20 rounded-sm flex items-end justify-center text-xs font-medium"
+                    style={{ height: `${Math.max(20, (data.patients / 22) * 60)}px` }}
+                  >
+                    {data.patients}
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-              <div className="p-3 bg-secondary/10 rounded-lg">
-                <div className="text-sm font-medium text-foreground">Emergency Response Improved</div>
-                <div className="text-xs text-muted-foreground">
-                  15% reduction in emergency wait times this week compared to last week.
-                </div>
-              </div>
-
-              <div className="p-3 bg-muted/50 rounded-lg">
-                <div className="text-sm font-medium text-foreground">Cardiology Bottleneck</div>
-                <div className="text-xs text-muted-foreground">
-                  Cardiology department showing longer wait times. Review specialist availability.
-                </div>
-              </div>
-
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <div className="text-sm font-medium text-foreground">Patient Satisfaction Up</div>
-                <div className="text-xs text-muted-foreground">
-                  5% increase in satisfaction scores since implementing AI wait time predictions.
-                </div>
+      {/* Summary Insights */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-serif">Today's Insights</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-green-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-green-800">Wait times improved by 8 minutes</p>
+                <p className="text-sm text-green-700">AI optimization reduced average wait time compared to yesterday</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+              <Heart className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-blue-800">Patient satisfaction increased</p>
+                <p className="text-sm text-blue-700">Satisfaction score improved by 0.3 points with better queue management</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+              <Activity className="w-5 h-5 text-purple-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-purple-800">Peak efficiency at 2 PM</p>
+                <p className="text-sm text-purple-700">Highest patient throughput with minimal wait times during afternoon shift</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

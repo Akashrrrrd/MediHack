@@ -127,3 +127,51 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Healthcare-specific utility classes */
+  .healthcare-primary {
+    @apply bg-primary text-primary-foreground;
+  }
+  
+  .healthcare-emergency {
+    @apply bg-destructive text-destructive-foreground;
+  }
+  
+  .healthcare-success {
+    @apply bg-green-600 text-white;
+  }
+  
+  .healthcare-warning {
+    @apply bg-yellow-500 text-white;
+  }
+  
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

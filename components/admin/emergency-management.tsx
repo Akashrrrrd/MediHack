@@ -2,122 +2,59 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertTriangle, Clock, Phone, Activity, Heart, Stethoscope, TrendingUp } from "lucide-react"
-import { AIService } from "@/lib/ai-service"
-import { EmergencyTriageForm } from "@/components/emergency-triage-form"
+import { AlertTriangle, Clock, User, Stethoscope, Phone } from "lucide-react"
 
 interface EmergencyManagementProps {
   hospitalId: number
 }
 
-interface EmergencyRecommendation {
-  patientId: number
-  patientName: string
-  symptoms: string
-  waitTime: number
-  urgencyLevel: "critical" | "high" | "moderate"
-  recommendation: string
-}
-
-interface EmergencyData {
-  emergencyCases: any[]
-  totalEmergencies: number
-  recommendations: EmergencyRecommendation[]
-}
-
-interface TriageData {
-  totalEmergencies: number
-  criticalCount: number
-  emergentCount: number
-  escalations: any[]
-  prioritizedPatients: any[]
-}
-
 export function EmergencyManagement({ hospitalId }: EmergencyManagementProps) {
-  const [emergencyData, setEmergencyData] = useState<EmergencyData | null>(null)
-  const [triageData, setTriageData] = useState<TriageData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedPatient, setSelectedPatient] = useState<any>(null)
-  const [showTriageForm, setShowTriageForm] = useState(false)
-
-  const fetchEmergencyData = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const [emergencyResult, triageResult] = await Promise.all([
-        AIService.getEmergencyRecommendations(hospitalId),
-        fetch(`/api/emergency-triage?hospitalId=${hospitalId}`).then((res) => res.json()),
-      ])
-
-      if (emergencyResult) {
-        setEmergencyData(emergencyResult)
-      }
-
-      if (triageResult.success) {
-        setTriageData(triageResult)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error occurred")
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [emergencyCases, setEmergencyCases] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchEmergencyData()
-    // Refresh every 30 seconds for emergency cases
-    const interval = setInterval(fetchEmergencyData, 30000)
-    return () => clearInterval(interval)
+    // Mock emergency data - in real app, fetch from API
+    const mockEmergencies = [
+      {
+        id: 1,
+        patientName: "Robert Chen",
+        age: 52,
+        symptoms: "Severe chest pain, difficulty breathing",
+        arrivalTime: new Date(Date.now() - 12 * 60000).toISOString(),
+        waitTime: 12,
+        priority: 1,
+        triageScore: 95,
+        department: "Emergency Department",
+        assignedDoctor: "Dr. Sarah Johnson",
+        vitalSigns: {
+          heartRate: 110,
+          bloodPressure: "160/95",
+          temperature: 98.6,
+          oxygenSat: 94
+        },
+        status: "waiting"
+      }
+    ]
+    
+    setEmergencyCases(mockEmergencies)
+    setLoading(false)
   }, [hospitalId])
 
-  const handleTriageComplete = (result: any) => {
-    setShowTriageForm(false)
-    setSelectedPatient(null)
-    fetchEmergencyData() // Refresh data
-
-    if (result.escalation?.required) {
-      // Show escalation alert
-      alert(`ESCALATION REQUIRED: ${result.escalation.reason}`)
+  const getPriorityColor = (priority: number) => {
+    switch (priority) {
+      case 1: return "destructive"
+      case 2: return "secondary"
+      default: return "outline"
     }
   }
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "resuscitation":
-        return "destructive"
-      case "emergent":
-        return "destructive"
-      case "urgent":
-        return "secondary"
-      case "less-urgent":
-        return "outline"
-      case "non-urgent":
-        return "outline"
-      default:
-        return "outline"
-    }
-  }
-
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case "resuscitation":
-        return "RESUSCITATION"
-      case "emergent":
-        return "EMERGENT"
-      case "urgent":
-        return "URGENT"
-      case "less-urgent":
-        return "LESS URGENT"
-      case "non-urgent":
-        return "NON-URGENT"
-      default:
-        return "UNKNOWN"
-    }
+  const getTriageColor = (score: number) => {
+    if (score >= 90) return "text-red-600"
+    if (score >= 70) return "text-orange-600"
+    return "text-yellow-600"
   }
 
   const formatWaitTime = (minutes: number) => {
@@ -127,207 +64,178 @@ export function EmergencyManagement({ hospitalId }: EmergencyManagementProps) {
     return `${hours}h ${mins}m`
   }
 
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading emergency cases...</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <div className="space-y-6">
+      {/* Emergency Alert */}
+      {emergencyCases.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>{emergencyCases.length} critical emergency case(s)</strong> require immediate attention.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="font-serif flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-destructive" />
-                Advanced Emergency Management
-              </CardTitle>
-              <CardDescription>AI-powered triage scoring and emergency prioritization system</CardDescription>
-            </div>
-            <Button onClick={fetchEmergencyData} disabled={loading} variant="outline" size="sm">
-              {loading ? "Refreshing..." : "Refresh"}
-            </Button>
-          </div>
+          <CardTitle className="font-serif flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
+            Emergency Case Management
+          </CardTitle>
+          <CardDescription>Monitor and manage critical emergency cases</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        <CardContent>
+          {emergencyCases.length === 0 ? (
+            <div className="text-center py-8">
+              <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">No Emergency Cases</h3>
+              <p className="text-muted-foreground">All emergency cases have been resolved.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {emergencyCases.map((case_) => (
+                <Card key={case_.id} className="border-red-200 bg-red-50">
+                  <CardContent className="p-4">
+                    <div className="space-y-4">
+                      {/* Patient Header */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                            <User className="w-5 h-5 text-red-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-red-800">{case_.patientName}</h4>
+                            <p className="text-sm text-red-600">Age: {case_.age} • {case_.department}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant="destructive">Critical</Badge>
+                          <p className="text-sm text-red-600 mt-1">
+                            Triage Score: <span className={`font-bold ${getTriageColor(case_.triageScore)}`}>
+                              {case_.triageScore}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
 
-          {triageData && (
-            <>
-              {/* Enhanced Emergency Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                  <div className="text-2xl font-bold text-destructive">{triageData.totalEmergencies}</div>
-                  <div className="text-sm text-muted-foreground">Total Emergency Cases</div>
-                </div>
-                <div className="text-center p-4 bg-destructive/20 border border-destructive/30 rounded-lg">
-                  <div className="text-2xl font-bold text-destructive">{triageData.criticalCount}</div>
-                  <div className="text-sm text-muted-foreground">Critical/Resuscitation</div>
-                </div>
-                <div className="text-center p-4 bg-secondary/10 border border-secondary/20 rounded-lg">
-                  <div className="text-2xl font-bold text-secondary">{triageData.emergentCount}</div>
-                  <div className="text-sm text-muted-foreground">Emergent Cases</div>
-                </div>
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-foreground">{triageData.escalations?.length || 0}</div>
-                  <div className="text-sm text-muted-foreground">Escalations Required</div>
-                </div>
-              </div>
+                      {/* Symptoms */}
+                      <div>
+                        <label className="text-sm font-medium text-red-700">Presenting Symptoms</label>
+                        <p className="text-red-800">{case_.symptoms}</p>
+                      </div>
 
-              {/* Escalation Alerts */}
-              {triageData.escalations && triageData.escalations.length > 0 && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>IMMEDIATE ESCALATION REQUIRED:</strong> {triageData.escalations.length} patient(s) need
-                    immediate attention.
-                  </AlertDescription>
-                </Alert>
-              )}
+                      {/* Vital Signs */}
+                      <div>
+                        <label className="text-sm font-medium text-red-700">Vital Signs</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                          <div className="bg-white/50 p-2 rounded">
+                            <div className="text-xs text-red-600">Heart Rate</div>
+                            <div className="font-semibold text-red-800">{case_.vitalSigns.heartRate} bpm</div>
+                          </div>
+                          <div className="bg-white/50 p-2 rounded">
+                            <div className="text-xs text-red-600">Blood Pressure</div>
+                            <div className="font-semibold text-red-800">{case_.vitalSigns.bloodPressure}</div>
+                          </div>
+                          <div className="bg-white/50 p-2 rounded">
+                            <div className="text-xs text-red-600">Temperature</div>
+                            <div className="font-semibold text-red-800">{case_.vitalSigns.temperature}°F</div>
+                          </div>
+                          <div className="bg-white/50 p-2 rounded">
+                            <div className="text-xs text-red-600">O2 Saturation</div>
+                            <div className="font-semibold text-red-800">{case_.vitalSigns.oxygenSat}%</div>
+                          </div>
+                        </div>
+                      </div>
 
-              {triageData.totalEmergencies === 0 ? (
-                <div className="text-center py-8">
-                  <Heart className="w-12 h-12 mx-auto mb-4 text-primary/50" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">No Active Emergency Cases</h3>
-                  <p className="text-muted-foreground">All emergency cases have been handled. Great work!</p>
-                </div>
-              ) : (
-                <>
-                  {/* Prioritized Emergency Cases */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-primary" />
-                      Triage-Prioritized Emergency Cases
-                    </h3>
-                    <div className="space-y-3">
-                      {triageData.prioritizedPatients
-                        .slice(0, 10) // Show top 10 priority cases
-                        .map(({ patient, triageScore, queuePosition }: any, index: number) => (
-                          <Card
-                            key={patient.id}
-                            className={`border-l-4 ${
-                              triageScore.category === "resuscitation" || triageScore.category === "emergent"
-                                ? "border-l-destructive bg-destructive/5"
-                                : triageScore.category === "urgent"
-                                  ? "border-l-secondary bg-secondary/5"
-                                  : "border-l-muted"
-                            }`}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between">
-                                <div className="space-y-3 flex-1">
-                                  <div className="flex items-center gap-3 flex-wrap">
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="outline" className="text-xs">
-                                        #{queuePosition}
-                                      </Badge>
-                                      <h4 className="font-medium text-foreground">Patient {patient.id}</h4>
-                                    </div>
-                                    <Badge variant={getCategoryColor(triageScore.category)}>
-                                      {getCategoryLabel(triageScore.category)}
-                                    </Badge>
-                                    <Badge variant="outline" className="gap-1">
-                                      <Activity className="w-3 h-3" />
-                                      Score: {triageScore.score}/10
-                                    </Badge>
-                                  </div>
-
-                                  <div className="space-y-2">
-                                    <div className="text-sm text-muted-foreground">
-                                      <strong>Symptoms:</strong> {patient.symptoms}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                      <Clock className="w-4 h-4" />
-                                      <strong>Wait Time:</strong>{" "}
-                                      {Math.floor((Date.now() - new Date(patient.arrivalTime).getTime()) / 60000)}m
-                                    </div>
-                                  </div>
-
-                                  {/* Triage Factors */}
-                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                                    <div className="bg-muted/50 p-2 rounded">
-                                      <div className="font-medium">Symptoms</div>
-                                      <div className="text-muted-foreground">{triageScore.factors.symptoms}/4</div>
-                                    </div>
-                                    <div className="bg-muted/50 p-2 rounded">
-                                      <div className="font-medium">Vitals</div>
-                                      <div className="text-muted-foreground">{triageScore.factors.vitalSigns}/3</div>
-                                    </div>
-                                    <div className="bg-muted/50 p-2 rounded">
-                                      <div className="font-medium">Pain</div>
-                                      <div className="text-muted-foreground">{triageScore.factors.painLevel}/2</div>
-                                    </div>
-                                  </div>
-
-                                  {/* AI Recommendations */}
-                                  {triageScore.recommendations.length > 0 && (
-                                    <Alert className="mt-3">
-                                      <Activity className="h-4 w-4" />
-                                      <AlertDescription className="text-sm">
-                                        <strong>Triage Recommendations:</strong>
-                                        <ul className="mt-1 space-y-1">
-                                          {triageScore.recommendations.slice(0, 2).map((rec: string, i: number) => (
-                                            <li key={i}>• {rec}</li>
-                                          ))}
-                                        </ul>
-                                      </AlertDescription>
-                                    </Alert>
-                                  )}
-                                </div>
-
-                                <div className="flex flex-col gap-2 ml-4">
-                                  <Button
-                                    size="sm"
-                                    variant={
-                                      triageScore.category === "resuscitation" || triageScore.category === "emergent"
-                                        ? "destructive"
-                                        : "outline"
-                                    }
-                                    onClick={() => {
-                                      setSelectedPatient(patient)
-                                      setShowTriageForm(true)
-                                    }}
-                                  >
-                                    <Stethoscope className="w-4 h-4 mr-1" />
-                                    Triage
-                                  </Button>
-                                  <Button size="sm" variant="ghost">
-                                    <Phone className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                      {/* Status and Actions */}
+                      <div className="flex items-center justify-between pt-2 border-t border-red-200">
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4 text-red-600" />
+                            <span className="text-red-700">Waiting: {formatWaitTime(case_.waitTime)}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Stethoscope className="w-4 h-4 text-red-600" />
+                            <span className="text-red-700">{case_.assignedDoctor}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-100">
+                            <Phone className="w-3 h-3 mr-1" />
+                            Call Doctor
+                          </Button>
+                          <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+                            Escalate Now
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          {!triageData && !loading && (
-            <div className="text-center py-8 text-muted-foreground">
-              <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-              <p>Loading emergency triage data...</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Triage Form Modal */}
-      {showTriageForm && selectedPatient && (
-        <EmergencyTriageForm
-          patientId={selectedPatient.id}
-          patientName={`Patient ${selectedPatient.id}`}
-          symptoms={selectedPatient.symptoms}
-          onTriageComplete={handleTriageComplete}
-          onCancel={() => {
-            setShowTriageForm(false)
-            setSelectedPatient(null)
-          }}
-        />
-      )}
+      {/* Emergency Protocols */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Emergency Protocols</CardTitle>
+          <CardDescription>Quick access to emergency procedures</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Button variant="outline" className="justify-start h-auto p-3">
+              <div className="text-left">
+                <div className="font-medium">Code Blue</div>
+                <div className="text-xs text-muted-foreground">Cardiac/Respiratory Arrest</div>
+              </div>
+            </Button>
+            <Button variant="outline" className="justify-start h-auto p-3">
+              <div className="text-left">
+                <div className="font-medium">Code Red</div>
+                <div className="text-xs text-muted-foreground">Fire Emergency</div>
+              </div>
+            </Button>
+            <Button variant="outline" className="justify-start h-auto p-3">
+              <div className="text-left">
+                <div className="font-medium">Code Silver</div>
+                <div className="text-xs text-muted-foreground">Weapon/Hostage</div>
+              </div>
+            </Button>
+            <Button variant="outline" className="justify-start h-auto p-3">
+              <div className="text-left">
+                <div className="font-medium">Trauma Alert</div>
+                <div className="text-xs text-muted-foreground">Major Trauma Incoming</div>
+              </div>
+            </Button>
+            <Button variant="outline" className="justify-start h-auto p-3">
+              <div className="text-left">
+                <div className="font-medium">Mass Casualty</div>
+                <div className="text-xs text-muted-foreground">Multiple Patients</div>
+              </div>
+            </Button>
+            <Button variant="outline" className="justify-start h-auto p-3">
+              <div className="text-left">
+                <div className="font-medium">Stroke Alert</div>
+                <div className="text-xs text-muted-foreground">Acute Stroke Protocol</div>
+              </div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

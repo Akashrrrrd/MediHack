@@ -17,34 +17,40 @@ import { LiveNotifications } from "@/components/live-notifications"
 import { Header } from "@/components/header"
 
 export default function AdminDashboard() {
-  const [selectedHospital, setSelectedHospital] = useState(1)
-  const [selectedHospitalName, setSelectedHospitalName] = useState("City General Hospital")
+  const [selectedHospital, setSelectedHospital] = useState<number | null>(null)
+  const [selectedHospitalName, setSelectedHospitalName] = useState("")
   const [notifications, setNotifications] = useState<string[]>([])
+  const [showHospitalSelector, setShowHospitalSelector] = useState(true)
+  
   const { queue, loading, stats, lastUpdated, refetch } = useAIPredictions({
-    hospitalId: selectedHospital,
-    refreshInterval: 10000, // 10 seconds for admin dashboard
+    hospitalId: selectedHospital || undefined,
+    refreshInterval: selectedHospital ? 10000 : 0, // Only refresh if hospital selected
   })
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const hospitalParam = urlParams.get("hospital")
-    const storedHospital = localStorage.getItem("selectedHospital")
+    const storedHospital = localStorage.getItem("adminSelectedHospital")
 
     if (hospitalParam) {
       try {
         const hospitalData = JSON.parse(decodeURIComponent(hospitalParam))
-        setSelectedHospital(hospitalData.id || 1)
-        setSelectedHospitalName(hospitalData.name || "City General Hospital")
+        setSelectedHospital(hospitalData.id)
+        setSelectedHospitalName(hospitalData.name)
+        setShowHospitalSelector(false)
+        localStorage.setItem("adminSelectedHospital", JSON.stringify(hospitalData))
       } catch (e) {
         console.error("Error parsing hospital param:", e)
       }
     } else if (storedHospital) {
       try {
         const hospitalData = JSON.parse(storedHospital)
-        setSelectedHospital(hospitalData.id || 1)
-        setSelectedHospitalName(hospitalData.name || "City General Hospital")
+        setSelectedHospital(hospitalData.id)
+        setSelectedHospitalName(hospitalData.name)
+        setShowHospitalSelector(false)
       } catch (e) {
         console.error("Error parsing stored hospital:", e)
+        localStorage.removeItem("adminSelectedHospital")
       }
     }
   }, [])
@@ -103,6 +109,68 @@ export default function AdminDashboard() {
     updateNotifications()
   }, [updateNotifications])
 
+  // Show hospital selector if no hospital selected
+  if (showHospitalSelector || !selectedHospital) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header currentPage="admin" />
+        <main className="max-w-4xl mx-auto px-4 py-8">
+          <div className="text-center space-y-6">
+            <div className="space-y-4">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <BarChart3 className="w-8 h-8 text-primary" />
+              </div>
+              <h1 className="text-3xl font-serif font-bold text-foreground">
+                Hospital Analytics Dashboard
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Select a hospital to access real-time analytics, queue management, and operational insights
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              {[
+                { id: 1, name: "City General Hospital", address: "123 Healthcare Ave", patients: 5, emergency: 1, avgWait: 22 },
+                { id: 2, name: "Metro Emergency Center", address: "456 Urgent Care Blvd", patients: 2, emergency: 1, avgWait: 14 },
+                { id: 3, name: "Riverside Medical Center", address: "789 River Road", patients: 0, emergency: 0, avgWait: 0 }
+              ].map((hospital) => (
+                <Card 
+                  key={hospital.id} 
+                  className="cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => {
+                    setSelectedHospital(hospital.id)
+                    setSelectedHospitalName(hospital.name)
+                    setShowHospitalSelector(false)
+                    localStorage.setItem("adminSelectedHospital", JSON.stringify(hospital))
+                  }}
+                >
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-2">{hospital.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-4">{hospital.address}</p>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Patients:</span>
+                        <span className="text-sm font-medium">{hospital.patients}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Emergency:</span>
+                        <span className="text-sm font-medium text-red-600">{hospital.emergency}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Avg Wait:</span>
+                        <span className="text-sm font-medium">{hospital.avgWait > 0 ? `${hospital.avgWait}m` : 'No wait'}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <LiveNotifications hospitalId={selectedHospital.toString()} isAdmin={true} />
@@ -115,6 +183,17 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-serif font-bold text-foreground">{selectedHospitalName}</h2>
             <p className="text-muted-foreground">Real-time Operations Dashboard</p>
           </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              setShowHospitalSelector(true)
+              setSelectedHospital(null)
+              localStorage.removeItem("adminSelectedHospital")
+            }}
+          >
+            Change Hospital
+          </Button>
           <div className="flex items-center gap-4">
             {notifications.length > 0 && (
               <div className="relative">
@@ -187,38 +266,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-serif">Department Status</CardTitle>
-              <CardDescription>Real-time overview of all departments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {Object.values(departmentStats).map((dept: any, index) => (
-                  <div key={index} className="p-4 border border-border rounded-lg space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-foreground">{dept.name}</h4>
-                      {dept.emergency > 0 && (
-                        <Badge variant="destructive" className="text-xs">
-                          {dept.emergency} Emergency
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Waiting:</span>
-                        <span className="font-medium">{dept.waiting}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Avg Wait:</span>
-                        <span className="font-medium">{formatTime(dept.avgWait)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -235,38 +283,40 @@ export default function AdminDashboard() {
         </div>
 
         {/* Department Overview */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif">Department Status</CardTitle>
-            <CardDescription>Real-time overview of all departments</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Object.values(departmentStats).map((dept: any, index) => (
-                <div key={index} className="p-4 border border-border rounded-lg space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-foreground">{dept.name}</h4>
-                    {dept.emergency > 0 && (
-                      <Badge variant="destructive" className="text-xs">
-                        {dept.emergency} Emergency
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Waiting:</span>
-                      <span className="font-medium">{dept.waiting}</span>
+        {Object.keys(departmentStats).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-serif">Department Status</CardTitle>
+              <CardDescription>Real-time overview of all departments</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.values(departmentStats).map((dept: any, index) => (
+                  <div key={index} className="p-4 border border-border rounded-lg space-y-3">
+                    <div className="flex items-start justify-between">
+                      <h4 className="font-medium text-foreground text-sm leading-tight">{dept.name}</h4>
+                      {dept.emergency > 0 && (
+                        <Badge variant="destructive" className="text-xs ml-2 flex-shrink-0">
+                          {dept.emergency} Emergency
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Avg Wait:</span>
-                      <span className="font-medium">{formatTime(dept.avgWait)}</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Waiting:</span>
+                        <span className="font-medium">{dept.waiting}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Avg Wait:</span>
+                        <span className="font-medium">{formatTime(dept.avgWait)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="queue" className="space-y-6">

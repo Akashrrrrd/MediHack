@@ -6,7 +6,11 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "demo": "node scripts/setup-demo.js && npm run dev",
+    "deploy": "npm run build && vercel --prod",
+    "db:setup": "node scripts/setup-database.js",
+    "hackathon": "echo '🏆 MediHack - Ready to win!' && npm run demo"
   },
   "dependencies": {
     "@ai-sdk/openai": "latest",

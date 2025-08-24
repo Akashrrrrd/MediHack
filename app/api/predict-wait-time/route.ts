@@ -6,14 +6,15 @@ import { DatabaseService } from "@/lib/database"
 
 // Helper function for realistic fallback wait times
 function generateRealisticWaitTime(queueEntry: any, queueLength: number): number {
-  const baseTime = 20 // Base consultation time
-  const priorityMultipliers = { 1: 0.2, 2: 0.5, 3: 1.0, 4: 1.2 }
+  const baseTime = 15 // Base consultation time
+  const priorityMultipliers = { 1: 0.1, 2: 0.3, 3: 1.0, 4: 1.3 }
   const priorityMultiplier = priorityMultipliers[queueEntry.priority_level as keyof typeof priorityMultipliers] || 1.0
 
-  // Calculate based on queue position and priority
-  const estimatedTime = queueLength * baseTime * priorityMultiplier + Math.random() * 15 + 10
+  // Calculate based on queue position and priority with more realistic timing
+  const queuePosition = Math.max(1, queueLength - 2) // Account for patients ahead
+  const estimatedTime = queuePosition * baseTime * priorityMultiplier + Math.random() * 8 + 5
 
-  return Math.round(Math.max(15, Math.min(180, estimatedTime))) // Between 15-180 minutes
+  return Math.round(Math.max(5, Math.min(90, estimatedTime))) // Between 5-90 minutes (more realistic)
 }
 
 export async function POST(request: NextRequest) {

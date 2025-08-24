@@ -1,52 +1,71 @@
-import type { NextRequest } from "next/server"
-import { getEmergencyCases } from "@/lib/database"
+import { type NextRequest } from "next/server"
+import { DatabaseService } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const hospitalId = searchParams.get("hospitalId")
 
-  const encoder = new TextEncoder()
+  if (!hospitalId) {
+    return new Response("Hospital ID required", { status: 400 })
+  }
 
+  // Set up Server-Sent Events
+  const encoder = new TextEncoder()
+  
   const stream = new ReadableStream({
     start(controller) {
       const sendEmergencyUpdate = async () => {
         try {
-          if (hospitalId) {
-            const emergencyCases = await getEmergencyCases(Number.parseInt(hospitalId))
-            const criticalCases = emergencyCases.filter((cas) => cas.priority === "critical")
+          const queueEntries = await DatabaseService.getQueueEntries(Number.parseInt(hospitalId))
+          const emergencyCases = queueEntries.filter(entry => entry.priority_level === 1)
+          
+          // Check for critical cases (waiting > 15 minutes)
+          const criticalCases = emergencyCases.filter(entry => {
+            const waitTime = Math.floor((Date.now() - new Date(entry.arrival_time).getTime()) / 60000)
+            return waitTime > 15
+          })
 
-            if (criticalCases.length > 0) {
-              const data = `data: ${JSON.stringify({
-                type: "emergency_alert",
-                hospitalId,
-                criticalCases,
-                count: criticalCases.length,
-                timestamp: new Date().toISOString(),
-              })}\n\n`
-              controller.enqueue(encoder.encode(data))
-            }
+          const data = {
+            type: "emergency_alert",
+            criticalCases: criticalCases.map(entry => ({
+              id: entry.id,
+              patientName: entry.patient?.name,
+              symptoms: entry.symptoms,
+              waitTime: Math.floor((Date.now() - new Date(entry.arrival_time).getTime()) / 60000),
+              department: entry.department?.name
+            })),
+            totalEmergencies: emergencyCases.length,
+            timestamp: new Date().toISOString()
           }
+
+          const message = `data: ${JSON.stringify(data)}\n\n`
+          controller.enqueue(encoder.encode(message))
         } catch (error) {
           console.error("Error sending emergency alert:", error)
         }
       }
 
-      // Check for emergencies every 2 seconds
-      const interval = setInterval(sendEmergencyUpdate, 2000)
+      // Send initial update
+      sendEmergencyUpdate()
 
-      request.signal.addEventListener("abort", () => {
+      // Send updates every 10 seconds for emergency alerts
+      const interval = setInterval(sendEmergencyUpdate, 10000)
+
+      // Cleanup function
+      return () => {
         clearInterval(interval)
-        controller.close()
-      })
-    },
+      }
+    }
   })
 
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      Connection: "keep-alive",
+      "Connection": "keep-alive",
       "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET",
+      "Access-Control-Allow-Headers": "Cache-Control",
     },
   })
 }

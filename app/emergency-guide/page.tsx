@@ -1,337 +1,282 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Heart, Brain, Zap, Thermometer, AlertTriangle, Phone, Clock, CheckCircle, XCircle, Info } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { 
+  AlertTriangle, 
+  Phone, 
+  Heart, 
+  Brain, 
+  Thermometer, 
+  Activity,
+  Clock,
+  MapPin,
+  Zap,
+  Shield,
+  Stethoscope,
+  Pill
+} from "lucide-react"
 import { Header } from "@/components/header"
-
-const emergencyConditions = [
-  {
-    id: "heart-attack",
-    name: "Heart Attack",
-    icon: Heart,
-    severity: "critical",
-    symptoms: ["Chest pain or pressure", "Shortness of breath", "Nausea", "Sweating", "Pain in arm/jaw"],
-    dos: [
-      "Call emergency services immediately (911/108)",
-      "Chew aspirin if not allergic (325mg)",
-      "Sit upright and stay calm",
-      "Loosen tight clothing",
-      "If unconscious, start CPR",
-    ],
-    donts: [
-      "Don't drive yourself to hospital",
-      "Don't eat or drink anything",
-      "Don't take nitroglycerin unless prescribed",
-      "Don't leave the person alone",
-    ],
-  },
-  {
-    id: "stroke",
-    name: "Stroke",
-    icon: Brain,
-    severity: "critical",
-    symptoms: ["Face drooping", "Arm weakness", "Speech difficulty", "Sudden confusion", "Severe headache"],
-    dos: [
-      "Call emergency services immediately",
-      "Note the time symptoms started",
-      "Keep person lying down with head elevated",
-      "Remove dentures or food from mouth",
-      "Stay with the person",
-    ],
-    donts: [
-      "Don't give food or water",
-      "Don't give medications",
-      "Don't let them walk",
-      "Don't wait to see if symptoms improve",
-    ],
-  },
-  {
-    id: "seizure",
-    name: "Seizure",
-    icon: Zap,
-    severity: "urgent",
-    symptoms: ["Uncontrolled shaking", "Loss of consciousness", "Confusion", "Staring spells", "Muscle stiffness"],
-    dos: [
-      "Clear area of dangerous objects",
-      "Place something soft under head",
-      "Turn person on their side",
-      "Time the seizure duration",
-      "Stay calm and reassure others",
-    ],
-    donts: [
-      "Don't put anything in their mouth",
-      "Don't hold them down",
-      "Don't give water or food",
-      "Don't leave them alone after seizure",
-    ],
-  },
-  {
-    id: "severe-bleeding",
-    name: "Severe Bleeding",
-    icon: AlertTriangle,
-    severity: "critical",
-    symptoms: ["Heavy blood loss", "Deep cuts", "Spurting blood", "Weakness", "Pale skin"],
-    dos: [
-      "Apply direct pressure with clean cloth",
-      "Elevate the injured area if possible",
-      "Call emergency services",
-      "Apply pressure to pressure points",
-      "Keep person warm and calm",
-    ],
-    donts: [
-      "Don't remove embedded objects",
-      "Don't use tourniquet unless trained",
-      "Don't give food or water",
-      "Don't move person unnecessarily",
-    ],
-  },
-  {
-    id: "high-fever",
-    name: "High Fever (104°F+)",
-    icon: Thermometer,
-    severity: "urgent",
-    symptoms: ["Temperature over 104°F", "Confusion", "Difficulty breathing", "Severe headache", "Rash"],
-    dos: [
-      "Remove excess clothing",
-      "Apply cool, damp cloths to forehead",
-      "Give fluids if conscious",
-      "Monitor breathing and consciousness",
-      "Seek immediate medical attention",
-    ],
-    donts: [
-      "Don't use ice baths",
-      "Don't give aspirin to children",
-      "Don't bundle up in blankets",
-      "Don't ignore other symptoms",
-    ],
-  },
-  {
-    id: "allergic-reaction",
-    name: "Severe Allergic Reaction",
-    icon: AlertTriangle,
-    severity: "critical",
-    symptoms: ["Difficulty breathing", "Swelling of face/throat", "Rapid pulse", "Dizziness", "Full body rash"],
-    dos: [
-      "Call emergency services immediately",
-      "Use EpiPen if available",
-      "Help person sit upright",
-      "Remove or avoid allergen",
-      "Monitor breathing closely",
-    ],
-    donts: [
-      "Don't give oral medications if swallowing is difficult",
-      "Don't leave person alone",
-      "Don't assume symptoms will improve",
-      "Don't give anything by mouth if unconscious",
-    ],
-  },
-]
-
-const getSeverityColor = (severity: string) => {
-  switch (severity) {
-    case "critical":
-      return "destructive"
-    case "urgent":
-      return "secondary"
-    default:
-      return "default"
-  }
-}
-
-const getSeverityIcon = (severity: string) => {
-  switch (severity) {
-    case "critical":
-      return AlertTriangle
-    case "urgent":
-      return Clock
-    default:
-      return Info
-  }
-}
+import Link from "next/link"
 
 export default function EmergencyGuidePage() {
-  const [selectedCondition, setSelectedCondition] = useState(emergencyConditions[0])
+  const emergencyConditions = [
+    {
+      icon: Heart,
+      title: "Heart Attack",
+      symptoms: ["Chest pain or pressure", "Pain in arm, neck, or jaw", "Shortness of breath", "Nausea", "Cold sweats"],
+      action: "Call 911 immediately. Chew aspirin if not allergic.",
+      severity: "critical"
+    },
+    {
+      icon: Brain,
+      title: "Stroke",
+      symptoms: ["Sudden numbness or weakness", "Confusion or trouble speaking", "Severe headache", "Vision problems", "Loss of balance"],
+      action: "Call 911 immediately. Note time symptoms started.",
+      severity: "critical"
+    },
+    {
+      icon: Activity,
+      title: "Severe Allergic Reaction",
+      symptoms: ["Difficulty breathing", "Swelling of face/throat", "Rapid pulse", "Dizziness", "Severe rash"],
+      action: "Use EpiPen if available. Call 911 immediately.",
+      severity: "critical"
+    },
+    {
+      icon: Thermometer,
+      title: "Severe Bleeding",
+      symptoms: ["Heavy bleeding that won't stop", "Blood spurting from wound", "Weakness or dizziness", "Pale skin"],
+      action: "Apply direct pressure. Elevate if possible. Call 911.",
+      severity: "critical"
+    },
+    {
+      icon: Stethoscope,
+      title: "Difficulty Breathing",
+      symptoms: ["Severe shortness of breath", "Wheezing or gasping", "Blue lips or fingernails", "Cannot speak in full sentences"],
+      action: "Sit upright. Use inhaler if prescribed. Call 911.",
+      severity: "urgent"
+    },
+    {
+      icon: Pill,
+      title: "Poisoning/Overdose",
+      symptoms: ["Nausea and vomiting", "Confusion or drowsiness", "Difficulty breathing", "Seizures", "Unconsciousness"],
+      action: "Call Poison Control: 1-800-222-1222. Do not induce vomiting unless told.",
+      severity: "critical"
+    }
+  ]
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case "critical":
+        return "destructive"
+      case "urgent":
+        return "secondary"
+      default:
+        return "outline"
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Header currentPage="emergency-guide" />
 
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+        {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-3xl font-serif font-bold text-foreground">Emergency Medical Guidance</h1>
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8 text-red-600" />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-serif font-bold text-foreground">
+            Emergency Medical Guide
+          </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Quick reference guide for medical emergencies when immediate hospital care isn't available
+            Recognize emergency symptoms and know when to seek immediate medical attention
           </p>
-
-          <Alert className="max-w-2xl mx-auto">
-            <Phone className="h-4 w-4" />
-            <AlertDescription className="text-left">
-              <strong>Always call emergency services first:</strong> 911 (US), 108 (India), or your local emergency
-              number. This guide provides temporary assistance while waiting for professional help.
-            </AlertDescription>
-          </Alert>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Condition Selection */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-serif">Select Emergency Condition</CardTitle>
-                <CardDescription>Choose the condition that best matches the symptoms</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {emergencyConditions.map((condition) => {
-                  const IconComponent = condition.icon
-                  const SeverityIcon = getSeverityIcon(condition.severity)
+        {/* Emergency Numbers */}
+        <Alert className="border-red-200 bg-red-50">
+          <Phone className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            <strong>Emergency: 911</strong> | Poison Control: 1-800-222-1222 | Crisis Text Line: Text HOME to 741741
+          </AlertDescription>
+        </Alert>
 
-                  return (
-                    <button
-                      key={condition.id}
-                      onClick={() => setSelectedCondition(condition)}
-                      className={`w-full p-3 rounded-lg border text-left transition-colors ${
-                        selectedCondition.id === condition.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <IconComponent className="w-5 h-5 text-primary" />
-                        <div className="flex-1">
-                          <div className="font-medium text-foreground">{condition.name}</div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant={getSeverityColor(condition.severity)} className="text-xs">
-                              <SeverityIcon className="w-3 h-3 mr-1" />
-                              {condition.severity}
-                            </Badge>
-                          </div>
-                        </div>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-red-200 hover:shadow-md transition-shadow">
+            <CardContent className="p-4 text-center">
+              <Phone className="w-8 h-8 text-red-600 mx-auto mb-2" />
+              <h3 className="font-semibold text-red-800">Call 911</h3>
+              <p className="text-sm text-red-600">Life-threatening emergencies</p>
+            </CardContent>
+          </Card>
+          <Card className="border-blue-200 hover:shadow-md transition-shadow">
+            <CardContent className="p-4 text-center">
+              <MapPin className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+              <h3 className="font-semibold text-blue-800">Find Hospital</h3>
+              <Link href="/patient">
+                <Button variant="outline" size="sm" className="mt-2">
+                  Locate Nearby
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+          <Card className="border-green-200 hover:shadow-md transition-shadow">
+            <CardContent className="p-4 text-center">
+              <Shield className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <h3 className="font-semibold text-green-800">First Aid</h3>
+              <p className="text-sm text-green-600">Basic emergency care</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Emergency Conditions */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-serif font-bold text-foreground">
+            When to Seek Emergency Care
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {emergencyConditions.map((condition, index) => (
+              <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                        <condition.icon className="w-5 h-5 text-red-600" />
                       </div>
-                    </button>
-                  )
-                })}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Detailed Guidance */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <selectedCondition.icon className="w-6 h-6 text-primary" />
-                  <div>
-                    <CardTitle className="font-serif">{selectedCondition.name}</CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant={getSeverityColor(selectedCondition.severity)}>
-                        {selectedCondition.severity.toUpperCase()}
-                      </Badge>
+                      <CardTitle className="text-lg">{condition.title}</CardTitle>
                     </div>
+                    <Badge variant={getSeverityColor(condition.severity)}>
+                      {condition.severity}
+                    </Badge>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="symptoms" className="space-y-4">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="symptoms">Symptoms</TabsTrigger>
-                    <TabsTrigger value="dos">What TO DO</TabsTrigger>
-                    <TabsTrigger value="donts">What NOT to do</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="symptoms" className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <Info className="w-4 h-4" />
-                        Common Symptoms
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {selectedCondition.symptoms.map((symptom, index) => (
-                          <div key={index} className="flex items-center gap-2 p-2 bg-muted/50 rounded">
-                            <div className="w-2 h-2 bg-primary rounded-full" />
-                            <span className="text-sm">{symptom}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="dos" className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        What TO DO
-                      </h3>
-                      <div className="space-y-3">
-                        {selectedCondition.dos.map((action, index) => (
-                          <div
-                            key={index}
-                            className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800"
-                          >
-                            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-green-800 dark:text-green-200">{action}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="donts" className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <XCircle className="w-4 h-4 text-red-600" />
-                        What NOT to Do
-                      </h3>
-                      <div className="space-y-3">
-                        {selectedCondition.donts.map((action, index) => (
-                          <div
-                            key={index}
-                            className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800"
-                          >
-                            <XCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-red-800 dark:text-red-200">{action}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-foreground mb-2">Symptoms:</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      {condition.symptoms.map((symptom, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <div className="w-1 h-1 bg-red-500 rounded-full"></div>
+                          {symptom}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <Alert>
+                    <Zap className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Action:</strong> {condition.action}
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
 
-        {/* Emergency Contacts */}
+        {/* First Aid Tips */}
         <Card>
           <CardHeader>
-            <CardTitle className="font-serif flex items-center gap-2">
-              <Phone className="w-5 h-5" />
-              Emergency Contacts
-            </CardTitle>
+            <CardTitle className="font-serif">Basic First Aid Tips</CardTitle>
+            <CardDescription>Essential knowledge for emergency situations</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
-                <h4 className="font-semibold text-red-800 dark:text-red-200">United States</h4>
-                <p className="text-2xl font-bold text-red-600">911</p>
-                <p className="text-sm text-red-700 dark:text-red-300">All emergencies</p>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <h4 className="font-medium text-foreground">For Bleeding:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Apply direct pressure with clean cloth</li>
+                  <li>• Elevate the injured area above heart level</li>
+                  <li>• Don't remove objects embedded in wounds</li>
+                  <li>• Seek medical attention for severe bleeding</li>
+                </ul>
               </div>
-              <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
-                <h4 className="font-semibold text-red-800 dark:text-red-200">India</h4>
-                <p className="text-2xl font-bold text-red-600">108</p>
-                <p className="text-sm text-red-700 dark:text-red-300">Medical emergencies</p>
+              <div className="space-y-3">
+                <h4 className="font-medium text-foreground">For Choking:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Encourage coughing if person can speak</li>
+                  <li>• Perform Heimlich maneuver if unable to cough</li>
+                  <li>• Call 911 if object doesn't dislodge</li>
+                  <li>• Continue until help arrives</li>
+                </ul>
               </div>
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <h4 className="font-semibold text-blue-800 dark:text-blue-200">Poison Control</h4>
-                <p className="text-2xl font-bold text-blue-600">1-800-222-1222</p>
-                <p className="text-sm text-blue-700 dark:text-blue-300">US Poison Control</p>
+              <div className="space-y-3">
+                <h4 className="font-medium text-foreground">For Burns:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Cool burn with cold water for 10-20 minutes</li>
+                  <li>• Don't use ice or butter</li>
+                  <li>• Cover with sterile gauze</li>
+                  <li>• Seek medical care for severe burns</li>
+                </ul>
+              </div>
+              <div className="space-y-3">
+                <h4 className="font-medium text-foreground">For Seizures:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Keep person safe from injury</li>
+                  <li>• Don't put anything in their mouth</li>
+                  <li>• Time the seizure duration</li>
+                  <li>• Call 911 if seizure lasts over 5 minutes</li>
+                </ul>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* When NOT to go to ER */}
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="text-blue-800">Consider Urgent Care Instead</CardTitle>
+            <CardDescription className="text-blue-700">
+              These conditions may not require emergency room care
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-medium text-blue-800 mb-2">Urgent Care Conditions:</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Minor cuts requiring stitches</li>
+                  <li>• Sprains and minor fractures</li>
+                  <li>• Mild to moderate fever</li>
+                  <li>• Ear infections</li>
+                  <li>• Minor burns</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-blue-800 mb-2">Primary Care Conditions:</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Routine check-ups</li>
+                  <li>• Prescription refills</li>
+                  <li>• Mild cold symptoms</li>
+                  <li>• Chronic condition management</li>
+                  <li>• Preventive care</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Call to Action */}
+        <div className="text-center space-y-4 py-8">
+          <h3 className="text-xl font-semibold text-foreground">Need Medical Care Now?</h3>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/patient">
+              <Button size="lg" className="bg-primary hover:bg-primary/90">
+                <MapPin className="w-4 h-4 mr-2" />
+                Find Nearby Hospital
+              </Button>
+            </Link>
+            <Button size="lg" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
+              <Phone className="w-4 h-4 mr-2" />
+              Call 911 for Emergencies
+            </Button>
+          </div>
+        </div>
       </main>
     </div>
   )

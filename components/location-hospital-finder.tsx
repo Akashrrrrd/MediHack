@@ -72,7 +72,7 @@ export default function LocationHospitalFinder({ onHospitalSelect }: LocationHos
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-2">
+                    <div className="space-y-2 flex-1">
                       <h4 className="font-semibold">{hospital.name}</h4>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4" />
@@ -82,8 +82,23 @@ export default function LocationHospitalFinder({ onHospitalSelect }: LocationHos
                         <Phone className="w-4 h-4" />
                         {hospital.phone}
                       </div>
+                      {(hospital as any).currentPatients !== undefined && (
+                        <div className="flex gap-4 text-xs pt-1">
+                          <span className="text-muted-foreground">
+                            Patients: <span className="font-medium">{(hospital as any).currentPatients}</span>
+                          </span>
+                          <span className="text-muted-foreground">
+                            Wait: <span className="font-medium">{(hospital as any).avgWaitTime > 0 ? `${(hospital as any).avgWaitTime}m` : 'No wait'}</span>
+                          </span>
+                          {(hospital as any).emergencyCases > 0 && (
+                            <span className="text-red-600">
+                              Emergency: <span className="font-medium">{(hospital as any).emergencyCases}</span>
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-right space-y-1">
+                    <div className="text-right space-y-1 ml-4">
                       <div className="text-sm font-medium text-primary">{hospital.distance.toFixed(1)} km away</div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="w-3 h-3" />~{Math.ceil(hospital.distance * 3)} min drive

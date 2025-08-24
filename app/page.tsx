@@ -54,6 +54,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <Header currentPage="home" />
 
+
+
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 to-background">
         <div className="max-w-6xl mx-auto px-4 py-20">
@@ -115,6 +117,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+
 
       {/* Features Section */}
       <section className="py-20">
