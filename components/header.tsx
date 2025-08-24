@@ -51,19 +51,7 @@ export function Header({ currentPage = "home" }: HeaderProps) {
               <span>Patient Portal</span>
             </Link>
 
-            {session && (
-              <Link
-                href="/patient/records"
-                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  currentPage === "records"
-                    ? "bg-healthcare-primary text-white"
-                    : "text-gray-700 hover:text-healthcare-primary hover:bg-gray-50"
-                }`}
-              >
-                <FileText className="h-4 w-4" />
-                <span>Patient Records</span>
-              </Link>
-            )}
+
 
             <Link
               href="/emergency-guide"
